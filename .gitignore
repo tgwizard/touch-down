@@ -1,0 +1,8 @@
+.DS_Store
+*.pyc
+venv
+.idea
+.coverage
+*.swp
+.cache/
+__pycache__/

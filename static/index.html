@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Touch Down Game</title>
+    <style>
+      html, body {
+        padding: 0;
+        margin: 0;
+      }
+      #game {
+        padding: 0;
+        margin: 0;
+        display: block;
+
+        background-color: #dddddd;
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="game"></canvas>
+    <script>
+        var game = document.getElementById('game');
+        var width = window.innerWidth;
+        var height = window.innerHeight;
+        game.width = width;
+        game.height = height;
+        game.addEventListener('touchstart', onTouchStart, false);
+        game.addEventListener('mousedown', onTouchStart, false);
+        game.addEventListener('touchend', onTouchEnd, false);
+        game.addEventListener('mouseup', onTouchEnd, false);
+        var ctx = game.getContext('2d');
+
+        function onTouchStart(event) {
+          if (!ws) return;
+          ws.send(JSON.stringify({'event': 'touch_start'}));
+        }
+
+        function onTouchEnd(event) {
+          if (!ws) return;
+          ws.send(JSON.stringify({'event': 'touch_end'}));
+        }
+
+        function drawGame(eventData) {
+          ctx.fillStyle = "#cccccc";
+          ctx.fillRect(0, 0, width, height);
+
+          var blue = "#7FDBFF";
+          var pink = "#EB7AB1";
+
+          var playerName = eventData.player_name;
+          if (playerName === "blue") {
+            var midPoint = 1 - eventData.score;
+            var colors = [pink, blue];
+          } else {
+            var midPoint = eventData.score;
+            var colors = [blue, pink];
+          }
+
+          ctx.fillStyle = colors[0];
+          ctx.fillRect(0, 0, width, height * midPoint);
+
+          ctx.fillStyle = colors[1];
+          ctx.fillRect(0, height * midPoint, width, height);
+
+          ctx.font = '100px Calibri';
+          ctx.textAlign = 'center';
+          ctx.fillStyle = '#ffffff';
+          ctx.fillText(playerName, width/2, height/2 + 25);
+        }
+
+        var ws = null;
+
+        function connect() {
+          ws = new WebSocket("ws://" + window.location.host + "/ws");
+
+          ws.onmessage = function(event) {
+            var data = JSON.parse(event.data);
+            console.log('ws message', data);
+            drawGame(data);
+          };
+
+          ws.onerror = function(event) {
+            console.error('ws error', event);
+          };
+
+          ws.onclose = function(event) {
+            ws = null;
+            console.log('ws close', event);
+            setTimeout(connect, 5000);
+          };
+        }
+
+        connect();
+    </script>
+  </body>
+</html>
